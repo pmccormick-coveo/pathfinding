@@ -199,7 +199,7 @@ fn run_dijkstra<N, C, FN, IN, FS>(
 where
     N: Eq + Hash + Clone,
     C: Zero + Ord + Copy,
-    FN: FnMut(&N) -> IN,
+    FN: FnMut(&N, usize) -> IN,
     IN: IntoIterator<Item = (N, C)>,
     FS: FnMut(&N) -> bool,
 {
@@ -224,7 +224,7 @@ where
             if cost > c {
                 continue;
             }
-            successors(node)
+            successors(node, index)
         };
         for (successor, move_cost) in successors {
             let new_cost = cost + move_cost;
