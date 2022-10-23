@@ -111,7 +111,7 @@ pub fn yen<N, C, FN, IN, FS>(
 where
     N: Eq + Hash + Clone,
     C: Zero + Ord + Copy,
-    FN: FnMut(&N) -> IN,
+    FN: FnMut(&N, usize) -> IN,
     IN: IntoIterator<Item = (N, C)>,
     FS: FnMut(&N) -> bool,
 {
@@ -146,8 +146,8 @@ where
             let filtered_nodes: HashSet<&N> = HashSet::from_iter(root_path);
             // We are creating a new successor function that will not return the
             // filtered edges and nodes that routes already used.
-            let mut filtered_successor = |n: &N| {
-                successors(n)
+            let mut filtered_successor = |n: &N, index: usize| {
+                successors(n, i)
                     .into_iter()
                     .filter(|(n2, _)| {
                         !filtered_nodes.contains(&n2) && !filtered_edges.contains(&(n, n2))
@@ -203,12 +203,12 @@ fn make_cost<N, FN, IN, C>(nodes: &[N], successors: &mut FN) -> C
 where
     N: Eq,
     C: Zero,
-    FN: FnMut(&N) -> IN,
+    FN: FnMut(&N, usize) -> IN,
     IN: IntoIterator<Item = (N, C)>,
 {
     let mut cost = C::zero();
     for edge in nodes.windows(2) {
-        for (n, c) in successors(&edge[0]) {
+        for (n, c) in successors(&edge[0], 0) {
             if n == edge[1] {
                 cost = cost + c;
             }
