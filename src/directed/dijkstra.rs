@@ -77,7 +77,7 @@ pub fn dijkstra<N, C, FN, IN, FS>(
 where
     N: Eq + Hash + Clone,
     C: Zero + Ord + Copy,
-    FN: FnMut(&N, usize) -> IN,
+    FN: FnMut(&N, Vec<N>) -> IN,
     IN: IntoIterator<Item = (N, C)>,
     FS: FnMut(&N) -> bool,
 {
@@ -92,7 +92,7 @@ pub(crate) fn dijkstra_internal<N, C, FN, IN, FS>(
 where
     N: Eq + Hash + Clone,
     C: Zero + Ord + Copy,
-    FN: FnMut(&N, usize) -> IN,
+    FN: FnMut(&N, Vec<N>) -> IN,
     IN: IntoIterator<Item = (N, C)>,
     FS: FnMut(&N) -> bool,
 {
@@ -146,7 +146,7 @@ pub fn dijkstra_all<N, C, FN, IN>(start: &N, successors: FN) -> HashMap<N, (N, C
 where
     N: Eq + Hash + Clone,
     C: Zero + Ord + Copy,
-    FN: FnMut(&N, usize) -> IN,
+    FN: FnMut(&N, Vec<N>) -> IN,
     IN: IntoIterator<Item = (N, C)>,
 {
     dijkstra_partial(start, successors, |_| false).0
@@ -176,7 +176,7 @@ pub fn dijkstra_partial<N, C, FN, IN, FS>(
 where
     N: Eq + Hash + Clone,
     C: Zero + Ord + Copy,
-    FN: FnMut(&N, usize) -> IN,
+    FN: FnMut(&N, Vec<N>) -> IN,
     IN: IntoIterator<Item = (N, C)>,
     FS: FnMut(&N) -> bool,
 {
@@ -199,7 +199,7 @@ fn run_dijkstra<N, C, FN, IN, FS>(
 where
     N: Eq + Hash + Clone,
     C: Zero + Ord + Copy,
-    FN: FnMut(&N, usize) -> IN,
+    FN: FnMut(&N, Vec<N>) -> IN,
     IN: IntoIterator<Item = (N, C)>,
     FS: FnMut(&N) -> bool,
 {
@@ -224,7 +224,8 @@ where
             if cost > c {
                 continue;
             }
-            successors(node, index)
+            let vec = reverse_path(&parents, |&(p, _)| p, index);
+            successors(node, vec)
         };
         for (successor, move_cost) in successors {
             let new_cost = cost + move_cost;
@@ -319,5 +320,36 @@ impl<K: Ord> PartialOrd for SmallestHolder<K> {
 impl<K: Ord> Ord for SmallestHolder<K> {
     fn cmp(&self, other: &Self) -> Ordering {
         other.cost.cmp(&self.cost)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    // Note this useful idiom: importing names from outer (for mod tests) scope.
+    use super::*;
+
+    #[test]
+    fn test_add() {
+        static GOAL: (i32, i32) = (4, 6);
+        let result = dijkstra(
+            &(1, 1),
+            |&(x, y), path| {
+                println!("{path:?}");
+                vec![
+                    (x + 1, y + 2),
+                    (x + 1, y - 2),
+                    (x - 1, y + 2),
+                    (x - 1, y - 2),
+                    (x + 2, y + 1),
+                    (x + 2, y - 1),
+                    (x - 2, y + 1),
+                    (x - 2, y - 1),
+                ]
+                .into_iter()
+                .map(|p| (p, 1))
+            },
+            |&p| p == GOAL,
+        );
+        assert_eq!(result.expect("no path found").1, 4);
     }
 }
