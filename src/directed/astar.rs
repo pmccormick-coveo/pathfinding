@@ -87,7 +87,7 @@ pub fn astar<N, C, FN, IN, FH, FS>(
 where
     N: Eq + Hash + Clone,
     C: Zero + Ord + Copy,
-    FN: FnMut(&N, usize) -> IN,
+    FN: FnMut(&N, Vec<N>) -> IN,
     IN: IntoIterator<Item = (N, C)>,
     FH: FnMut(&N) -> C,
     FS: FnMut(&N) -> bool,
@@ -113,7 +113,7 @@ where
             if cost > c {
                 continue;
             }
-            successors(node, index)
+            successors(node, reverse_path(&parents, |&(p, _)| p, index))
         };
         for (successor, move_cost) in successors {
             let new_cost = cost + move_cost;
