@@ -334,7 +334,6 @@ mod tests {
         let result = dijkstra(
             &(1, 1),
             |&(x, y), path| {
-                println!("{path:?}");
                 vec![
                     (x + 1, y + 2),
                     (x + 1, y - 2),
